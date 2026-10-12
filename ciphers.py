@@ -6,7 +6,7 @@ ALPHA = string.ascii_uppercase
 
 def caesar(text, n, direction="right"):
     shift = n % 26
-    if direction == "left":
+    if direction in ("left", "gauche"):
         shift = -shift
     out = []
     for ch in text:
@@ -19,7 +19,7 @@ def caesar(text, n, direction="right"):
 
 
 def caesar_decrypt(text, n, direction="right"):
-    other = "left" if direction == "right" else "right"
+    other = "right" if direction in ("left", "gauche") else "left"
     return caesar(text, n, other)
 
 
@@ -53,7 +53,7 @@ def egcd(a, b):
 def inv_mod(a, m):
     g, x, _ = egcd(a % m, m)
     if g != 1:
-        raise ValueError("no inverse")
+        raise ValueError("pas d'inverse")
     return x % m
 
 
@@ -74,7 +74,7 @@ def mat_inverse_mod(m, mod=26):
     n = len(m)
     d = det(m) % mod
     if gcd(d, mod) != 1:
-        raise ValueError("key matrix is not invertible mod 26")
+        raise ValueError("la matrice clé n'est pas inversible modulo 26")
     di = inv_mod(d, mod)
     if n == 1:
         return [[di]]
@@ -90,7 +90,7 @@ def key_from_text(word):
     letters = clean(word)
     size = int(len(letters) ** 0.5)
     if size < 2 or size * size != len(letters):
-        raise ValueError("key must have 4 or 9 letters")
+        raise ValueError("la clé doit avoir 4 ou 9 lettres")
     nums = [ALPHA.index(c) for c in letters]
     return [nums[i * size:(i + 1) * size] for i in range(size)]
 
@@ -99,7 +99,7 @@ def hill_encrypt(text, key):
     n = len(key)
     det_ok = gcd(det(key) % 26, 26) == 1
     if not det_ok:
-        raise ValueError("key matrix is not invertible mod 26")
+        raise ValueError("la matrice clé n'est pas inversible modulo 26")
     letters = clean(text)
     while len(letters) % n:
         letters += "X"
@@ -116,7 +116,7 @@ def hill_decrypt(text, key):
     n = len(key)
     letters = clean(text)
     if len(letters) % n:
-        raise ValueError("ciphertext length must be a multiple of %d" % n)
+        raise ValueError("la longueur du chiffré doit être un multiple de %d" % n)
     out = []
     for i in range(0, len(letters), n):
         block = [ALPHA.index(c) for c in letters[i:i + n]]
@@ -129,7 +129,7 @@ def hill_known_plaintext(plain, cipher, n=2):
     p = [ALPHA.index(c) for c in clean(plain)]
     c = [ALPHA.index(x) for x in clean(cipher)]
     if len(p) < n * n or len(c) < n * n:
-        raise ValueError("need at least n*n letters")
+        raise ValueError("il faut au moins n*n lettres")
     for start in range(0, len(p) - n * n * 1 + 1, n):
         P = [[p[start + i * n + j] for i in range(n)] for j in range(n)]
         C = [[c[start + i * n + j] for i in range(n)] for j in range(n)]
@@ -139,7 +139,7 @@ def hill_known_plaintext(plain, cipher, n=2):
             continue
         K = [[sum(C[r][k] * Pinv[k][col] for k in range(n)) % 26 for col in range(n)] for r in range(n)]
         return K
-    raise ValueError("no invertible plaintext block found")
+    raise ValueError("aucun bloc de clair inversible trouvé")
 
 
 def playfair_square(key):
@@ -194,7 +194,7 @@ def playfair_decrypt(text, key):
     sq = playfair_square(key)
     letters = clean(text).replace("J", "I")
     if len(letters) % 2:
-        raise ValueError("ciphertext length must be even")
+        raise ValueError("la longueur du chiffré doit être paire")
     pairs = [(letters[i], letters[i + 1]) for i in range(0, len(letters), 2)]
     return playfair_step(pairs, sq, -1)
 

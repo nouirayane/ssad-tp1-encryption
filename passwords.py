@@ -53,9 +53,9 @@ def brute_force(target_hash, charset, length):
 def combined_attack(target_hash, charset, length):
     found, t1, s1 = dictionary_attack(target_hash)
     if found is not None and len(found) == length and set(found) <= set(charset):
-        return found, t1, s1, "dictionary"
+        return found, t1, s1, "dictionnaire"
     found, t2, s2 = brute_force(target_hash, charset, length)
-    return found, t1 + t2, s1 + s2, "brute force"
+    return found, t1 + t2, s1 + s2, "force brute"
 
 
 def hash_rate(samples=200000):
@@ -71,7 +71,7 @@ def estimate_seconds(space, rate):
 
 def human_time(seconds):
     if seconds < 1e-3:
-        return "%.0f us" % (seconds * 1e6)
+        return "%.0f µs" % (seconds * 1e6)
     if seconds < 1:
         return "%.1f ms" % (seconds * 1e3)
     if seconds < 60:
@@ -81,11 +81,11 @@ def human_time(seconds):
     if seconds < 86400:
         return "%.1f h" % (seconds / 3600)
     if seconds < 86400 * 365:
-        return "%.1f days" % (seconds / 86400)
+        return "%.1f jours" % (seconds / 86400)
     years = seconds / 86400 / 365
     if years < 1000:
-        return "%.1f years" % years
-    return "%.1e years" % years
+        return "%.1f ans" % years
+    return "%.1e ans" % years
 
 
 ITERATIONS = 200000
@@ -105,17 +105,17 @@ def check_record(record, attempt):
 def strength_problems(password):
     problems = []
     if len(password) < 10:
-        problems.append("shorter than 10 characters")
+        problems.append("moins de 10 caractères")
     if password.lower() in WORDLIST:
-        problems.append("appears in the common password list")
+        problems.append("figure dans la liste des mots de passe courants")
     if not any(c.islower() for c in password):
-        problems.append("no lowercase letter")
+        problems.append("aucune minuscule")
     if not any(c.isupper() for c in password):
-        problems.append("no uppercase letter")
+        problems.append("aucune majuscule")
     if not any(c.isdigit() for c in password):
-        problems.append("no digit")
+        problems.append("aucun chiffre")
     if not any(c in "+*-_@#$!?%&=" for c in password):
-        problems.append("no special character")
+        problems.append("aucun caractère spécial")
     return problems
 
 

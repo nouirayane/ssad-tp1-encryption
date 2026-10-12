@@ -20,5 +20,5 @@ def seal(ciphertext, secret):
 
 def open_sealed(ciphertext, received_tag, secret):
     if not verify(ciphertext, secret, received_tag):
-        raise ValueError("authentication failed")
+        raise ValueError("authentification échouée")
     return ciphertext

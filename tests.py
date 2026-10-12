@@ -148,25 +148,25 @@ def benchmark():
         rows.append((name, time.perf_counter() - start))
         return out
 
-    timed("caesar encrypt", lambda: ciphers.caesar(text, 5))
-    timed("hill encrypt", lambda: ciphers.hill_encrypt(text, key_hill))
-    timed("playfair encrypt", lambda: ciphers.playfair_encrypt(text, "monarchy"))
-    print("%d characters" % len(text))
+    timed("chiffrement cesar", lambda: ciphers.caesar(text, 5))
+    timed("chiffrement hill", lambda: ciphers.hill_encrypt(text, key_hill))
+    timed("chiffrement playfair", lambda: ciphers.playfair_encrypt(text, "monarchy"))
+    print("%d caractères" % len(text))
     for name, secs in rows:
         print("%-20s %.4f s" % (name, secs))
     print()
     rate = passwords.hash_rate(100000)
-    print("sha256 guesses per second: %d" % rate)
+    print("essais sha256 par seconde : %d" % rate)
     cases = [
-        ("3 chars of 0/1", passwords.BINARY, 3),
-        ("4 chars of 1-4", passwords.DIGITS_1_4, 4),
-        ("3 chars full set", passwords.FULL, 3),
+        ("3 car. de 0/1", passwords.BINARY, 3),
+        ("4 car. de 1 a 4", passwords.DIGITS_1_4, 4),
+        ("3 car. ensemble complet", passwords.FULL, 3),
     ]
     for label, cs, ln in cases:
         pw = cs[-1] * ln
         h = passwords.sha(pw)
         _, tries, secs = passwords.brute_force(h, cs, ln)
-        print("%-18s space %-8d tries %-8d %.4f s" % (label, passwords.search_space(cs, ln), tries, secs))
+        print("%-24s espace %-8d essais %-8d %.4f s" % (label, passwords.search_space(cs, ln), tries, secs))
 
 
 if __name__ == "__main__":

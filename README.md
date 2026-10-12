@@ -1,8 +1,8 @@
-# Encryption framework (SSAD TP1)
+# Framework de chiffrement (SSAD TP1)
 
-Practical work for the SSAD course, USTHB 2026-2027. Python 3, standard library only.
+Travail pratique du cours SSAD, USTHB 2026-2027. Python 3, bibliothèque standard uniquement.
 
-## Run
+## Lancement
 
 ```
 python app.py
@@ -10,24 +10,24 @@ python tests.py
 python tests.py bench
 ```
 
-## Contents
+## Contenu
 
-| File | What it does |
-|------|--------------|
-| `ciphers.py` | Caesar, Hill, Playfair and the attacks on them |
-| `passwords.py` | Password cases, dictionary and brute force attacks, PBKDF2, lockout |
-| `integrity.py` | SHA-256 digest and HMAC tag |
-| `app.py` | Tkinter interface |
-| `tests.py` | Unit tests and benchmark |
-| `report.pdf` | Full report |
+| Fichier | Rôle |
+|---------|------|
+| `ciphers.py` | César, Hill, Playfair et les attaques correspondantes |
+| `passwords.py` | Cas de mots de passe, attaques par dictionnaire et force brute, PBKDF2, verrouillage |
+| `integrity.py` | Empreinte SHA-256 et tag HMAC |
+| `app.py` | Interface Tkinter |
+| `tests.py` | Tests unitaires et banc d'essai |
+| `report.pdf` | Rapport complet |
 
-## Work split
+## Répartition du travail
 
-| Member | Task |
-|--------|------|
-| 1 | Caesar cipher and its attacks |
-| 2 | Hill cipher and known plaintext attack |
-| 3 | Playfair cipher and digram analysis |
-| 4 | Password attacks (dictionary, brute force) |
-| 5 | Password protection and HMAC integrity |
-| 6 | Interface, tests, benchmarks, report |
+| Membre | Tâche |
+|--------|-------|
+| 1 | Chiffrement de César et ses attaques |
+| 2 | Chiffrement de Hill et attaque à clair connu |
+| 3 | Chiffrement de Playfair et analyse des digrammes |
+| 4 | Attaques sur mots de passe (dictionnaire, force brute) |
+| 5 | Protection des mots de passe et intégrité HMAC |
+| 6 | Interface, tests, mesures, rapport |
