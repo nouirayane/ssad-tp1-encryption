@@ -4,86 +4,67 @@ from math import gcd
 ALPHA = string.ascii_uppercase
 
 
+def clean(text):
+    return "".join(c for c in text.upper() if c in ALPHA)
+
+
 def caesar(text, n, direction="right"):
     shift = n % 26
     if direction in ("left", "gauche"):
         shift = -shift
-    out = []
+    result = ""
     for ch in text:
         if ch.isascii() and ch.isalpha():
-            base = ord("A") if ch.isupper() else ord("a")
-            out.append(chr((ord(ch) - base + shift) % 26 + base))
+            start = ord("A") if ch.isupper() else ord("a")
+            result += chr((ord(ch) - start + shift) % 26 + start)
         else:
-            out.append(ch)
-    return "".join(out)
+            result += ch
+    return result
 
 
 def caesar_decrypt(text, n, direction="right"):
-    other = "right" if direction in ("left", "gauche") else "left"
-    return caesar(text, n, other)
+    if direction in ("left", "gauche"):
+        return caesar(text, n, "right")
+    return caesar(text, n, "left")
 
 
 def caesar_bruteforce(text):
     return [(k, caesar(text, k, "left")) for k in range(26)]
 
 
-FREQ_EN = "ETAOINSHRDLU"
-
-
 def caesar_frequency_guess(text):
-    letters = [c for c in text.upper() if c in ALPHA]
+    letters = clean(text)
     if not letters:
         return 0
-    counts = {c: letters.count(c) for c in ALPHA}
-    top = max(counts, key=counts.get)
-    return (ALPHA.index(top) - ALPHA.index("E")) % 26
-
-
-def clean(text):
-    return "".join(c for c in text.upper() if c in ALPHA)
-
-
-def egcd(a, b):
-    if b == 0:
-        return a, 1, 0
-    g, x, y = egcd(b, a % b)
-    return g, y, x - (a // b) * y
-
-
-def inv_mod(a, m):
-    g, x, _ = egcd(a % m, m)
-    if g != 1:
-        raise ValueError("pas d'inverse")
-    return x % m
+    most_common = max(ALPHA, key=letters.count)
+    return (ALPHA.index(most_common) - ALPHA.index("E")) % 26
 
 
 def det(m):
-    n = len(m)
-    if n == 1:
+    if len(m) == 1:
         return m[0][0]
-    if n == 2:
-        return m[0][0] * m[1][1] - m[0][1] * m[1][0]
     total = 0
-    for j in range(n):
+    for j in range(len(m)):
         minor = [row[:j] + row[j + 1:] for row in m[1:]]
-        total += ((-1) ** j) * m[0][j] * det(minor)
+        total += (-1) ** j * m[0][j] * det(minor)
     return total
 
 
-def mat_inverse_mod(m, mod=26):
+def mat_inverse_mod(m):
     n = len(m)
-    d = det(m) % mod
-    if gcd(d, mod) != 1:
+    d = det(m) % 26
+    if gcd(d, 26) != 1:
         raise ValueError("la matrice clé n'est pas inversible modulo 26")
-    di = inv_mod(d, mod)
+    d_inv = pow(d, -1, 26)
     if n == 1:
-        return [[di]]
-    cof = [[0] * n for _ in range(n)]
+        return [[d_inv]]
+    inverse = [[0] * n for _ in range(n)]
     for i in range(n):
         for j in range(n):
-            minor = [r[:j] + r[j + 1:] for k, r in enumerate(m) if k != i]
-            cof[i][j] = ((-1) ** (i + j)) * det(minor)
-    return [[(cof[j][i] * di) % mod for j in range(n)] for i in range(n)]
+            minor = [row[:j] + row[j + 1:] for k, row in enumerate(m) if k != i]
+            cofactor = (-1) ** (i + j) * det(minor)
+            inverse[j][i] = cofactor * d_inv % 26
+    return inverse
 
 
 def key_from_text(word):
@@ -91,63 +72,68 @@ def key_from_text(word):
     size = int(len(letters) ** 0.5)
     if size < 2 or size * size != len(letters):
         raise ValueError("la clé doit avoir 4 ou 9 lettres")
-    nums = [ALPHA.index(c) for c in letters]
-    return [nums[i * size:(i + 1) * size] for i in range(size)]
+    numbers = [ALPHA.index(c) for c in letters]
+    return [numbers[i * size:(i + 1) * size] for i in range(size)]
+
+
+def hill_apply(text, key):
+    n = len(key)
+    numbers = [ALPHA.index(c) for c in text]
+    result = ""
+    for start in range(0, len(numbers), n):
+        block = numbers[start:start + n]
+        for row in key:
+            result += ALPHA[sum(a * b for a, b in zip(row, block)) % 26]
+    return result
 
 
 def hill_encrypt(text, key):
-    n = len(key)
-    det_ok = gcd(det(key) % 26, 26) == 1
-    if not det_ok:
-        raise ValueError("la matrice clé n'est pas inversible modulo 26")
+    mat_inverse_mod(key)
     letters = clean(text)
-    while len(letters) % n:
+    while len(letters) % len(key) != 0:
         letters += "X"
-    out = []
-    for i in range(0, len(letters), n):
-        block = [ALPHA.index(c) for c in letters[i:i + n]]
-        for r in range(n):
-            out.append(ALPHA[sum(key[r][c] * block[c] for c in range(n)) % 26])
-    return "".join(out)
+    return hill_apply(letters, key)
 
 
 def hill_decrypt(text, key):
-    inv = mat_inverse_mod(key)
-    n = len(key)
+    inverse = mat_inverse_mod(key)
     letters = clean(text)
-    if len(letters) % n:
-        raise ValueError("la longueur du chiffré doit être un multiple de %d" % n)
-    out = []
-    for i in range(0, len(letters), n):
-        block = [ALPHA.index(c) for c in letters[i:i + n]]
-        for r in range(n):
-            out.append(ALPHA[sum(inv[r][c] * block[c] for c in range(n)) % 26])
-    return "".join(out)
+    if len(letters) % len(key) != 0:
+        raise ValueError("la longueur du chiffré doit être un multiple de %d" % len(key))
+    return hill_apply(letters, inverse)
+
+
+def block_matrix(text, start, n):
+    numbers = [ALPHA.index(c) for c in text[start:start + n * n]]
+    return [[numbers[i * n + j] for i in range(n)] for j in range(n)]
+
+
+def mat_mul_mod(a, b):
+    size = len(a)
+    return [[sum(a[i][k] * b[k][j] for k in range(size)) % 26 for j in range(size)] for i in range(size)]
 
 
 def hill_known_plaintext(plain, cipher, n=2):
-    p = [ALPHA.index(c) for c in clean(plain)]
-    c = [ALPHA.index(x) for x in clean(cipher)]
-    if len(p) < n * n or len(c) < n * n:
+    plain = clean(plain)
+    cipher = clean(cipher)
+    if len(plain) < n * n or len(cipher) < n * n:
         raise ValueError("il faut au moins n*n lettres")
-    for start in range(0, len(p) - n * n * 1 + 1, n):
-        P = [[p[start + i * n + j] for i in range(n)] for j in range(n)]
-        C = [[c[start + i * n + j] for i in range(n)] for j in range(n)]
+    for start in range(0, len(plain) - n * n + 1, n):
+        P = block_matrix(plain, start, n)
+        C = block_matrix(cipher, start, n)
         try:
-            Pinv = mat_inverse_mod(P)
+            return mat_mul_mod(C, mat_inverse_mod(P))
         except ValueError:
             continue
-        K = [[sum(C[r][k] * Pinv[k][col] for k in range(n)) % 26 for col in range(n)] for r in range(n)]
-        return K
     raise ValueError("aucun bloc de clair inversible trouvé")
 
 
 def playfair_square(key):
-    seen = []
+    letters = []
     for ch in clean(key).replace("J", "I") + ALPHA.replace("J", ""):
-        if ch not in seen:
-            seen.append(ch)
-    return seen
+        if ch not in letters:
+            letters.append(ch)
+    return letters
 
 
 def playfair_pairs(text):
@@ -155,68 +141,60 @@ def playfair_pairs(text):
     pairs = []
     i = 0
     while i < len(letters):
-        a = letters[i]
-        if i + 1 < len(letters):
-            b = letters[i + 1]
-            if a == b:
-                pairs.append((a, "X"))
-                i += 1
-            else:
-                pairs.append((a, b))
-                i += 2
-        else:
-            pairs.append((a, "X"))
+        first = letters[i]
+        second = letters[i + 1] if i + 1 < len(letters) else "X"
+        if first == second:
+            second = "X"
             i += 1
+        else:
+            i += 2
+        pairs.append((first, second))
     return pairs
 
 
-def playfair_step(pairs, square, step):
-    out = []
-    for a, b in pairs:
-        ia, ib = square.index(a), square.index(b)
-        ra, ca = divmod(ia, 5)
-        rb, cb = divmod(ib, 5)
-        if ra == rb:
-            out.append(square[ra * 5 + (ca + step) % 5] + square[rb * 5 + (cb + step) % 5])
-        elif ca == cb:
-            out.append(square[((ra + step) % 5) * 5 + ca] + square[((rb + step) % 5) * 5 + cb])
-        else:
-            out.append(square[ra * 5 + cb] + square[rb * 5 + ca])
-    return "".join(out)
+def playfair_swap(a, b, square, step):
+    row_a, col_a = divmod(square.index(a), 5)
+    row_b, col_b = divmod(square.index(b), 5)
+    if row_a == row_b:
+        col_a = (col_a + step) % 5
+        col_b = (col_b + step) % 5
+    elif col_a == col_b:
+        row_a = (row_a + step) % 5
+        row_b = (row_b + step) % 5
+    else:
+        col_a, col_b = col_b, col_a
+    return square[row_a * 5 + col_a] + square[row_b * 5 + col_b]
 
 
 def playfair_encrypt(text, key):
-    sq = playfair_square(key)
-    return playfair_step(playfair_pairs(text), sq, 1)
+    square = playfair_square(key)
+    return "".join(playfair_swap(a, b, square, 1) for a, b in playfair_pairs(text))
 
 
 def playfair_decrypt(text, key):
-    sq = playfair_square(key)
+    square = playfair_square(key)
     letters = clean(text).replace("J", "I")
-    if len(letters) % 2:
+    if len(letters) % 2 != 0:
         raise ValueError("la longueur du chiffré doit être paire")
-    pairs = [(letters[i], letters[i + 1]) for i in range(0, len(letters), 2)]
-    return playfair_step(pairs, sq, -1)
+    return "".join(playfair_swap(letters[i], letters[i + 1], square, -1) for i in range(0, len(letters), 2))
 
 
 def playfair_strip_padding(text):
-    out = []
-    i = 0
-    while i < len(text):
-        if text[i] == "X" and 0 < i < len(text) - 1 and text[i - 1] == text[i + 1]:
-            i += 1
+    result = ""
+    for i, ch in enumerate(text):
+        between_equal = 0 < i < len(text) - 1 and text[i - 1] == text[i + 1]
+        if ch == "X" and between_equal:
             continue
-        out.append(text[i])
-        i += 1
-    if out and out[-1] == "X":
-        out.pop()
-    return "".join(out)
+        result += ch
+    if result.endswith("X"):
+        result = result[:-1]
+    return result
 
 
 def digram_counts(text):
     letters = clean(text)
     counts = {}
     for i in range(0, len(letters) - 1, 2):
-        d = letters[i:i + 2]
-        counts[d] = counts.get(d, 0) + 1
-    return sorted(counts.items(), key=lambda kv: -kv[1])
+        pair = letters[i:i + 2]
+        counts[pair] = counts.get(pair, 0) + 1
+    return sorted(counts.items(), key=lambda item: -item[1])
