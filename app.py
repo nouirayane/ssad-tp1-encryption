@@ -109,15 +109,15 @@ class MessagingTab(ttk.Frame):
         self.key.delete(0, "end")
         if name == "Caesar":
             self.key.insert(0, "3")
-            self.hint.config(text="Clé : décalage n (entier). Le sens s'applique au chiffrement.")
+            self.hint.config(text="Clé : décalage n (entier) sur 53 symboles : a-z, A-Z et espace.")
             self.direction.config(state="readonly")
         elif name == "Hill":
-            self.key.insert(0, "3,3,2,5")
-            self.hint.config(text="Clé : 4 ou 9 nombres séparés par des virgules, ou un mot de 4 ou 9 lettres.")
+            self.key.insert(0, "4,5,3,2")
+            self.hint.config(text="Clé : 4 ou 9 nombres séparés par des virgules (déterminant non divisible par 3), ou un mot de 4 ou 9 lettres.")
             self.direction.config(state="disabled")
         else:
             self.key.insert(0, "monarchy")
-            self.hint.config(text="Clé : un mot quelconque (J est confondu avec I).")
+            self.hint.config(text="Clé : un mot ou une phrase. Carré 7x7 : lettres, chiffres, espace et ponctuation (I et J restent distincts).")
             self.direction.config(state="disabled")
 
     def encrypt(self, text):
@@ -195,7 +195,7 @@ class CipherAttackTab(ttk.Frame):
 
         buttons = ttk.Frame(self)
         buttons.pack(fill="x", pady=6)
-        ttk.Button(buttons, text="César : les 52 décalages", command=self.caesar_all).pack(side="left")
+        ttk.Button(buttons, text="César : les 53 décalages", command=self.caesar_all).pack(side="left")
         ttk.Button(buttons, text="César : analyse de fréquence", command=self.caesar_frequency).pack(side="left", padx=6)
         ttk.Button(buttons, text="Playfair : comptage des digrammes", command=self.digrams).pack(side="left")
 
@@ -203,11 +203,11 @@ class CipherAttackTab(ttk.Frame):
         hill.pack(fill="x", pady=6)
         ttk.Label(hill, text="Clair connu").grid(row=0, column=0, sticky="w")
         self.known_plain = ttk.Entry(hill, width=30)
-        self.known_plain.insert(0, "MEETMEATNOON")
+        self.known_plain.insert(0, "MEET ME AT NOON")
         self.known_plain.grid(row=0, column=1, padx=6)
         ttk.Label(hill, text="Chiffré correspondant").grid(row=1, column=0, sticky="w")
         self.known_cipher = ttk.Entry(hill, width=30)
-        self.known_cipher.insert(0, ciphers.hill_encrypt("MEETMEATNOON", [[3, 3], [2, 5]]))
+        self.known_cipher.insert(0, ciphers.hill_encrypt("MEET ME AT NOON", [[4, 5], [3, 2]]))
         self.known_cipher.grid(row=1, column=1, padx=6)
         ttk.Button(hill, text="Retrouver la clé", command=self.hill_attack).grid(row=0, column=2, rowspan=2, padx=6)
 
