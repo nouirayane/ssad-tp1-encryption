@@ -15,6 +15,7 @@ def run_caesar(encrypt):
     n = int(input("Décalage n : "))
     direction = input("Sens (droite / gauche) : ")
     if encrypt:
+        ciphers.check_caesar_key(n)
         print(ciphers.caesar(text, n, direction))
     else:
         print(ciphers.caesar_decrypt(text, n, direction))
@@ -24,15 +25,17 @@ def run_hill(encrypt):
     text = input("Texte : ")
     key = read_hill_key()
     if encrypt:
+        ciphers.check_hill_key(key)
         print(ciphers.hill_encrypt(text, key))
     else:
-        print(ciphers.hill_decrypt(text, key))
+        print(ciphers.hill_strip_padding(ciphers.hill_decrypt(text, key), len(key)))
 
 
 def run_playfair(encrypt):
     text = input("Texte : ")
     key = input("Mot clé : ")
     if encrypt:
+        ciphers.check_playfair_key(key)
         print(ciphers.playfair_encrypt(text, key))
     else:
         print(ciphers.playfair_strip_padding(ciphers.playfair_decrypt(text, key)))

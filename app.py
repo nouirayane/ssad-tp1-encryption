@@ -16,6 +16,13 @@ def read_hill_key(text):
     return ciphers.key_from_text(text)
 
 
+def read_caesar_key(text):
+    try:
+        return int(text)
+    except ValueError:
+        raise ValueError("clé invalide : entrez un nombre entier")
+
+
 def make_text_box(parent, height):
     box = tk.Text(parent, height=height, wrap="word")
     box.pack(fill="both", expand=True)
@@ -90,7 +97,14 @@ class MessagingTab(ttk.Frame):
 
         self.change_algorithm()
 
+    def clear_channel(self):
+        self.cipher_box.delete("1.0", "end")
+        self.tag_entry.delete(0, "end")
+        set_text(self.result_box, "")
+        self.status.config(text="")
+
     def change_algorithm(self, event=None):
+        self.clear_channel()
         name = self.algorithm.get()
         self.key.delete(0, "end")
         if name == "Caesar":
@@ -110,29 +124,35 @@ class MessagingTab(ttk.Frame):
         name = self.algorithm.get()
         key = self.key.get()
         if name == "Caesar":
-            return ciphers.caesar(text, int(key), self.direction.get())
+            shift = read_caesar_key(key)
+            ciphers.check_caesar_key(shift)
+            return ciphers.caesar(text, shift, self.direction.get())
         if name == "Hill":
-            return ciphers.hill_encrypt(text, read_hill_key(key))
+            hill_key = read_hill_key(key)
+            ciphers.check_hill_key(hill_key)
+            return ciphers.hill_encrypt(text, hill_key)
+        ciphers.check_playfair_key(key)
         return ciphers.playfair_encrypt(text, key)
 
     def decrypt(self, text):
         name = self.algorithm.get()
         key = self.key.get()
         if name == "Caesar":
-            return ciphers.caesar_decrypt(text, int(key), self.direction.get())
+            return ciphers.caesar_decrypt(text, read_caesar_key(key), self.direction.get())
         if name == "Hill":
-            return ciphers.hill_decrypt(text, read_hill_key(key))
+            hill_key = read_hill_key(key)
+            return ciphers.hill_strip_padding(ciphers.hill_decrypt(text, hill_key), len(hill_key))
         return ciphers.playfair_strip_padding(ciphers.playfair_decrypt(text, key))
 
     def send(self):
         try:
             encrypted = self.encrypt(get_text(self.message))
         except ValueError as error:
-            messagebox.showerror("Erreur", str(error))
+            self.clear_channel()
+            self.status.config(text="rien n'a été envoyé : " + str(error), foreground="red")
             return
-        self.cipher_box.delete("1.0", "end")
+        self.clear_channel()
         self.cipher_box.insert("1.0", encrypted)
-        self.tag_entry.delete(0, "end")
         self.tag_entry.insert(0, integrity.tag(encrypted, self.secret.get()))
         self.status.config(text="message envoyé", foreground="green")
 
@@ -148,6 +168,9 @@ class MessagingTab(ttk.Frame):
     def receive(self):
         encrypted = get_text(self.cipher_box)
         received_tag = self.tag_entry.get().strip()
+        if not encrypted:
+            self.status.config(text="aucun message reçu : A doit d'abord envoyer", foreground="red")
+            return
         if not integrity.verify(encrypted, self.secret.get(), received_tag):
             self.status.config(text="intégrité non vérifiée, message rejeté", foreground="red")
             set_text(self.result_box, "")

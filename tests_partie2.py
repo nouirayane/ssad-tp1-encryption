@@ -51,6 +51,13 @@ class HillTests(unittest.TestCase):
             self.assertEqual(ciphers.hill_decrypt(ciphers.hill_encrypt(msg, key), key), msg)
             done += 1
 
+    def test_padding_removed(self):
+        key = [[3, 3], [2, 5]]
+        enc = ciphers.hill_encrypt("BONJOUR", key)
+        plain = ciphers.hill_decrypt(enc, key)
+        self.assertEqual(plain, "BONJOURX")
+        self.assertEqual(ciphers.hill_strip_padding(plain, 2), "BONJOUR")
+
     def test_bad_key_rejected(self):
         with self.assertRaises(ValueError):
             ciphers.hill_encrypt("HELLO", [[2, 4], [1, 2]])
@@ -75,6 +82,27 @@ class PlayfairTests(unittest.TestCase):
     def test_odd_length(self):
         enc = ciphers.playfair_encrypt("abc", "key")
         self.assertEqual(len(enc) % 2, 0)
+
+
+class WeakKeyTests(unittest.TestCase):
+    def test_caesar_identity_shift(self):
+        for n in (0, 26, -52):
+            with self.assertRaises(ValueError):
+                ciphers.check_caesar_key(n)
+        ciphers.check_caesar_key(3)
+
+    def test_hill_identity_matrix(self):
+        with self.assertRaises(ValueError):
+            ciphers.check_hill_key([[1, 0], [0, 1]])
+        with self.assertRaises(ValueError):
+            ciphers.check_hill_key([[27, 0], [0, 1]])
+        ciphers.check_hill_key([[3, 3], [2, 5]])
+
+    def test_playfair_short_key(self):
+        for key in ("", "123", "aab"):
+            with self.assertRaises(ValueError):
+                ciphers.check_playfair_key(key)
+        ciphers.check_playfair_key("monarchy")
 
 
 if __name__ == "__main__":

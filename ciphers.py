@@ -8,6 +8,23 @@ def clean(text):
     return "".join(c for c in text.upper() if c in ALPHA)
 
 
+def check_caesar_key(n):
+    if n % 26 == 0:
+        raise ValueError("clé invalide : un décalage multiple de 26 ne change pas le message")
+
+
+def check_hill_key(key):
+    mat_inverse_mod(key)
+    identity = all(key[i][j] % 26 == (1 if i == j else 0) for i in range(len(key)) for j in range(len(key)))
+    if identity:
+        raise ValueError("clé invalide : la matrice identité ne change pas le message")
+
+
+def check_playfair_key(key):
+    if len(set(clean(key))) < 4:
+        raise ValueError("clé invalide : il faut au moins 4 lettres différentes")
+
+
 def caesar(text, n, direction="right"):
     shift = n % 26
     if direction in ("left", "gauche"):
@@ -101,6 +118,14 @@ def hill_decrypt(text, key):
     if len(letters) % len(key) != 0:
         raise ValueError("la longueur du chiffré doit être un multiple de %d" % len(key))
     return hill_apply(letters, inverse)
+
+
+def hill_strip_padding(text, n):
+    removed = 0
+    while text.endswith("X") and removed < n - 1:
+        text = text[:-1]
+        removed += 1
+    return text
 
 
 def block_matrix(text, start, n):
