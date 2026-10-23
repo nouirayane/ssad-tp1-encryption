@@ -195,7 +195,7 @@ class CipherAttackTab(ttk.Frame):
 
         buttons = ttk.Frame(self)
         buttons.pack(fill="x", pady=6)
-        ttk.Button(buttons, text="César : les 26 décalages", command=self.caesar_all).pack(side="left")
+        ttk.Button(buttons, text="César : les 52 décalages", command=self.caesar_all).pack(side="left")
         ttk.Button(buttons, text="César : analyse de fréquence", command=self.caesar_frequency).pack(side="left", padx=6)
         ttk.Button(buttons, text="Playfair : comptage des digrammes", command=self.digrams).pack(side="left")
 

@@ -2,6 +2,7 @@ import string
 from math import gcd
 
 ALPHA = string.ascii_uppercase
+CAESAR_ALPHABET = string.ascii_lowercase + string.ascii_uppercase
 
 
 def clean(text):
@@ -9,8 +10,8 @@ def clean(text):
 
 
 def check_caesar_key(n):
-    if n % 26 == 0:
-        raise ValueError("clé invalide : un décalage multiple de 26 ne change pas le message")
+    if n % 52 == 0:
+        raise ValueError("clé invalide : un décalage multiple de 52 ne change pas le message")
 
 
 def check_hill_key(key):
@@ -26,14 +27,14 @@ def check_playfair_key(key):
 
 
 def caesar(text, n, direction="right"):
-    shift = n % 26
+    shift = n % 52
     if direction in ("left", "gauche"):
         shift = -shift
     result = ""
     for ch in text:
-        if ch.isascii() and ch.isalpha():
-            start = ord("A") if ch.isupper() else ord("a")
-            result += chr((ord(ch) - start + shift) % 26 + start)
+        if ch in CAESAR_ALPHABET:
+            position = CAESAR_ALPHABET.index(ch)
+            result += CAESAR_ALPHABET[(position + shift) % 52]
         else:
             result += ch
     return result
@@ -46,15 +47,15 @@ def caesar_decrypt(text, n, direction="right"):
 
 
 def caesar_bruteforce(text):
-    return [(k, caesar(text, k, "left")) for k in range(26)]
+    return [(k, caesar(text, k, "left")) for k in range(52)]
 
 
 def caesar_frequency_guess(text):
-    letters = clean(text)
+    letters = [ch for ch in text if ch in CAESAR_ALPHABET]
     if not letters:
         return 0
-    most_common = max(ALPHA, key=letters.count)
-    return (ALPHA.index(most_common) - ALPHA.index("E")) % 26
+    most_common = max(CAESAR_ALPHABET, key=letters.count)
+    return (CAESAR_ALPHABET.index(most_common) - CAESAR_ALPHABET.index("e")) % 52
 
 
 def det(m):

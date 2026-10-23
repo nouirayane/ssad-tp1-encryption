@@ -7,14 +7,19 @@ import ciphers
 class CaesarTests(unittest.TestCase):
     def test_roundtrip_both_directions(self):
         msg = "Hello, World! xyz"
-        for n in range(0, 60):
+        for n in range(0, 120):
             for d in ("right", "left"):
                 enc = ciphers.caesar(msg, n, d)
                 self.assertEqual(ciphers.caesar_decrypt(enc, n, d), msg)
 
     def test_known_value(self):
-        self.assertEqual(ciphers.caesar("ABC xyz", 3, "right"), "DEF abc")
-        self.assertEqual(ciphers.caesar("DEF abc", 3, "left"), "ABC xyz")
+        self.assertEqual(ciphers.caesar("ABC xyz", 3, "right"), "DEF ABC")
+        self.assertEqual(ciphers.caesar("DEF ABC", 3, "left"), "ABC xyz")
+
+    def test_alphabet_has_52_letters(self):
+        self.assertEqual(len(ciphers.caesar_bruteforce("abc")), 52)
+        self.assertEqual(ciphers.caesar("z", 1, "right"), "A")
+        self.assertEqual(ciphers.caesar("Z", 1, "right"), "a")
 
     def test_bruteforce_contains_plaintext(self):
         enc = ciphers.caesar("attack at dawn", 7)
@@ -86,7 +91,7 @@ class PlayfairTests(unittest.TestCase):
 
 class WeakKeyTests(unittest.TestCase):
     def test_caesar_identity_shift(self):
-        for n in (0, 26, -52):
+        for n in (0, 52, -104):
             with self.assertRaises(ValueError):
                 ciphers.check_caesar_key(n)
         ciphers.check_caesar_key(3)
